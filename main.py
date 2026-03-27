@@ -6,7 +6,30 @@ from hand_tracker import HandTracker
 from blender_controller import BlenderController
 from ui_overlay import render_ui, draw_hand_skeleton, draw_target_ring, draw_text
 
+def list_available_cameras():
+    """Sistemdeki aktif kameralari hizli bir sekilde tarar."""
+    available_cameras = []
+    # Menzili 3'e dusurduk ve sadece isOpened kontrolu yapiyoruz
+    for index in range(3):
+        cap = cv2.VideoCapture(index)
+        if cap.isOpened():
+            available_cameras.append(index)
+            cap.release()
+    return available_cameras
+
 def main():
+    print("[*] Stark Industries Holographic Interface baslatiliyor...")
+    
+    # 1. Kamerayi hemen ac (Donanim baslatma suresini maskelemek icin)
+    cap = cv2.VideoCapture(0)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+    
+    # 2. Donanim taramasini hizli yap
+    cameras = list_available_cameras()
+    if cameras: print(f"[*] Aktif kameralar: {cameras}")
+
+    # 3. Model yukleme
     model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'hand_landmarker.task')
     if not os.path.exists(model_path):
         print(f"HATA: Model dosyasi bulunamadi: {model_path}")
@@ -14,12 +37,7 @@ def main():
 
     tracker = HandTracker(model_path)
     controller = BlenderController()
-    cap = cv2.VideoCapture(0)
-
-    # Kamerayı yüksek çözünürlükte başlat
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-
+    
     timestamp = 0
     start_time = time.time()
     frame_count = 0
